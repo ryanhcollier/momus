@@ -1,66 +1,37 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from 'next/link';
+import { Presentation, LogIn } from 'lucide-react';
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen flex flex-col items-center justify-center bg-shade-5 text-white overflow-hidden relative">
+      {/* Decorative background elements */}
+      <div className="absolute top-[20%] left-[20%] w-96 h-96 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-note-blue/10 rounded-full blur-[100px] pointer-events-none" />
+      
+      <div className="glass-panel p-12 max-w-2xl text-center space-y-8 animate-in relative z-10">
+        <div className="flex justify-center">
+          <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center text-primary border border-primary/30">
+            <Presentation size={40} />
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <h1 className="text-5xl font-bold tracking-tight">Infinite Board</h1>
+          <p className="text-xl text-gray-400 max-w-lg mx-auto leading-relaxed">
+            A premium, infinite canvas for collaborative reviews, moodboards, and team synchronization.
           </p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center">
+          <Link href="/admin" className="btn-primary py-3 px-6 text-lg flex items-center justify-center gap-2">
+            <LogIn size={20} /> Host Dashboard
+          </Link>
         </div>
-      </main>
+
+        <p className="text-sm text-gray-500 pt-8">
+          Are you a viewer? Ask your host for the shared board link.
+        </p>
+      </div>
     </div>
   );
 }

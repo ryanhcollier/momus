@@ -1,33 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-display: 'Outfit', var(--font-sans);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+  /* 5 Shades of Grey for Board Backgrounds */
+  --shade-1: #ffffff; /* pure white */
+  --shade-2: #e0e0e0;
+  --shade-3: #808080;
+  --shade-4: #2a2a2a;
+  --shade-5: #000000; /* pure black (default) */
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
+  /* Sticky Note Colors (vibrant for contrast) */
+  --note-yellow: #fef08a;
+  --note-blue: #bfdbfe;
+  --note-pink: #fbcfe8;
+  --note-green: #bbf7d0;
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --danger: #ef4444;
+
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-blur: 16px;
+
+  /* Use shade-4 glass for light backgrounds */
+  --glass-bg-light: rgba(0, 0, 0, 0.6);
+  --glass-border-light: rgba(0, 0, 0, 0.1);
 }
 
 * {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--shade-5);
+  color: #fff;
+  overflow: hidden; /* Prevent native scrolling for canvas */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
 }
 
 a {
@@ -35,8 +62,87 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+/* Background Shades Utilities */
+.bg-shade-1 { background-color: var(--shade-1); color: #000; }
+.bg-shade-2 { background-color: var(--shade-2); color: #000; }
+.bg-shade-3 { background-color: var(--shade-3); color: #fff; }
+.bg-shade-4 { background-color: var(--shade-4); color: #fff; }
+.bg-shade-5 { background-color: var(--shade-5); color: #fff; }
+
+/* Premium Glassmorphism UI */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.glass-panel.invert-glass {
+  background: var(--glass-bg-light);
+  border-color: var(--glass-border-light);
+  color: #fff;
+}
+
+/* Common UI Elements */
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.invert-glass .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animations */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-in {
+  animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: inherit;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.invert-glass .input-field {
+  background: rgba(0,0,0,0.2);
+  border-color: rgba(255,255,255,0.2);
+  color: white;
 }
