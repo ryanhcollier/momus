@@ -91,49 +91,66 @@ export default function AdminDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-shade-5 text-white">
-        <div className="glass-panel p-8 w-full max-w-md animate-in">
-          <h1 className="text-3xl font-bold mb-6 text-center">Host Login</h1>
-          <form onSubmit={handleLogin} className="space-y-4">
+      <div className="min-h-screen flex items-center justify-center bg-shade-5 text-white relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute top-[10%] left-[20%] w-[400px] h-[400px] bg-primary/20 rounded-full blur-[100px] pointer-events-none animate-float" />
+        <div className="absolute bottom-[10%] right-[20%] w-[350px] h-[350px] bg-note-pink/10 rounded-full blur-[100px] pointer-events-none animate-float-delayed" />
+        
+        <div className="glass-panel p-10 w-full max-w-md animate-in relative z-10 border-white/10 shadow-2xl">
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary ring-1 ring-primary/30">
+              <ExternalLink size={28} />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold mb-8 text-center tracking-tight">Host Login</h1>
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <input
                 type="password"
                 placeholder="Enter Host Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
+                className="input-field py-3"
               />
             </div>
-            <button type="submit" className="btn-primary w-full">
+            <button type="submit" className="btn-primary w-full py-3">
               Access Dashboard
             </button>
           </form>
-          <p className="mt-4 text-center text-sm text-gray-400">Password is 'host123'</p>
+          <p className="mt-6 text-center text-sm text-gray-500 font-medium">Password is 'host123'</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-shade-5 text-white p-8">
-      <div className="max-w-5xl mx-auto animate-in space-y-8">
-        <div className="flex justify-between items-center bg-shade-4 p-6 rounded-2xl border border-gray-700">
+    <div className="min-h-screen bg-shade-5 text-white p-8 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none animate-float" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-note-blue/5 rounded-full blur-[120px] pointer-events-none animate-float-delayed" />
+      
+      <div className="max-w-5xl mx-auto animate-in space-y-10 relative z-10">
+        {/* Header */}
+        <div className="flex justify-between items-center glass-panel p-8 border-white/10">
           <div>
-            <h1 className="text-3xl font-bold">Host Dashboard</h1>
-            <p className="text-gray-400 mt-1">Manage your collaborative boards</p>
+            <h1 className="text-4xl font-bold tracking-tight">Host Dashboard</h1>
+            <p className="text-gray-400 mt-2 text-lg">Manage your collaborative boards</p>
           </div>
-          <button onClick={handleLogout} className="btn-primary bg-danger hover:bg-red-600">
+          <button onClick={handleLogout} className="btn-primary bg-danger hover:bg-red-600 bg-none border-red-500/50 shadow-red-500/20">
             Logout
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Create Board Form */}
-          <div className="glass-panel p-6 h-fit md:col-span-1">
-            <h2 className="text-xl font-semibold mb-4">Create New Board</h2>
-            <form onSubmit={createBoard} className="space-y-4">
+          <div className="glass-panel p-8 h-fit md:col-span-1 border-white/10 relative overflow-hidden">
+            {/* Subtle inner glow */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 blur-[50px] pointer-events-none" />
+            
+            <h2 className="text-xl font-semibold mb-6 tracking-tight">Create New Board</h2>
+            <form onSubmit={createBoard} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-300">Board Title</label>
+                <label className="block text-sm font-medium mb-2 text-gray-400">Board Title</label>
                 <input
                   type="text"
                   placeholder="e.g. Client Review Session"

@@ -112,40 +112,40 @@ export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd 
       )}
 
       {/* Main Toolbar */}
-      <div className="glass-panel p-2 flex items-center gap-2 ring-1 ring-white/10">
+      <div className="bg-white rounded-xl px-2 py-1.5 flex items-center gap-1 shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 mb-6">
         <button 
           onClick={() => handleToolClick('pointer')}
-          className={`btn-icon ${activeTool === 'pointer' ? 'bg-primary text-white' : 'text-gray-400 hover:text-white'}`}
+          className={`btn-icon !w-10 !h-10 ${activeTool === 'pointer' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
           title="Pointer tool"
         >
-          <MousePointer2 size={20} />
+          <MousePointer2 size={18} />
         </button>
 
-        <div className="w-px h-8 bg-white/10 mx-1"></div>
+        <div className="w-px h-5 bg-gray-200 mx-1"></div>
 
         <button 
           onClick={() => handleToolClick('note')}
-          className={`btn-icon ${activeTool === 'note' ? 'bg-primary text-white' : 'text-gray-400 hover:text-white'}`}
+          className={`btn-icon !w-10 !h-10 ${activeTool === 'note' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
           title="Add Sticky Note"
         >
-          <StickyNote size={20} />
+          <StickyNote size={18} />
         </button>
 
         {isHost && (
           <>
             <button 
               onClick={() => handleToolClick('image')}
-              className={`btn-icon ${activeTool === 'image' ? 'bg-primary text-white' : 'text-gray-400 hover:text-white'}`}
+              className={`btn-icon !w-10 !h-10 ${activeTool === 'image' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
               title="Add Image"
             >
-              <ImageIcon size={20} />
+              <ImageIcon size={18} />
             </button>
             <button 
               onClick={() => handleToolClick('video')}
-              className={`btn-icon ${activeTool === 'video' ? 'bg-primary text-white' : 'text-gray-400 hover:text-white'}`}
+              className={`btn-icon !w-10 !h-10 ${activeTool === 'video' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
               title="Add Video"
             >
-              <Video size={20} />
+              <Video size={18} />
             </button>
           </>
         )}

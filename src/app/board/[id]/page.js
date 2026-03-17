@@ -64,13 +64,9 @@ export default function BoardPage({ params }) {
 
   const handleBoardClick = async (x, y) => {
     if (activeTool === 'note') {
-      // Add sticky note
-      const text = prompt('Enter your note:');
-      if (text) {
-        await createItem({ type: 'note', text, x, y });
-        // Reset tool to pointer after placing note
-        setActiveTool('pointer');
-      }
+      // Instantly create a blank note that enters edit mode
+      await createItem({ type: 'note', text: '', x, y });
+      setActiveTool('pointer');
     }
   };
 
@@ -95,6 +91,22 @@ export default function BoardPage({ params }) {
     setActiveTool('pointer');
   };
 
+  const handleUpdateItem = async (itemId, updates) => {
+    // Optimistic UI update
+    setItems((prev) => prev.map(item => item.id === itemId ? { ...item, ...updates } : item));
+
+    try {
+      await fetch(`/api/boards/${id}/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+    } catch (err) {
+      console.error('Error updating item', err);
+      // Let poll correct it on next tick if failed
+    }
+  };
+
   const handleDeleteItem = async (itemId) => {
     try {
       const res = await fetch(`/api/boards/${id}/items/${itemId}`, { method: 'DELETE' });
@@ -108,11 +120,10 @@ export default function BoardPage({ params }) {
 
   if (isLoading || !board) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-shade-5 text-white">
-        <div className="animate-pulse flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-primary" />
-          <div className="w-4 h-4 rounded-full bg-primary/70" />
-          <div className="w-4 h-4 rounded-full bg-primary/40" />
+      <div className="min-h-screen flex items-center justify-center bg-shade-5 text-gray-800">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col items-center gap-4 animate-in">
+          <div className="w-10 h-10 border-4 border-gray-100 border-t-primary rounded-full animate-spin" />
+          <p className="text-gray-500 font-medium">Loading Workspace...</p>
         </div>
       </div>
     );
@@ -129,6 +140,8 @@ export default function BoardPage({ params }) {
                 item={item} 
                 isHost={isHost} 
                 onDelete={handleDeleteItem} 
+                onUpdate={handleUpdateItem}
+                activeTool={activeTool}
               />
             );
           } else {
@@ -138,6 +151,8 @@ export default function BoardPage({ params }) {
                 item={item} 
                 isHost={isHost} 
                 onDelete={handleDeleteItem} 
+                onUpdate={handleUpdateItem}
+                activeTool={activeTool}
               />
             );
           }
@@ -152,14 +167,23 @@ export default function BoardPage({ params }) {
       />
       
       {/* Board Info overlay */}
-      <div className="fixed top-4 left-4 z-50 glass-panel px-4 py-2 pointer-events-none">
-        <h2 className="text-xl font-bold text-white drop-shadow-md">{board.title}</h2>
-        <p className="text-xs text-white/70">ID: {board.id}</p>
+      <div className="fixed top-6 left-6 z-50 bg-white rounded-lg px-4 py-3 pointer-events-none shadow-sm border border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-800 drop-shadow-sm tracking-tight">{board.title}</h2>
+        <div className="flex items-center gap-2 mt-1">
+          <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.4)] animate-pulse" />
+          <p className="text-xs font-mono text-gray-500">Live Session &middot; ID: {board.id}</p>
+        </div>
       </div>
 
       {activeTool === 'note' && (
-        <div className="fixed top-4 right-4 z-50 glass-panel bg-primary/20 border-primary/50 text-primary px-4 py-2 animate-in pointer-events-none">
-          Click anywhere to place a note
+        <div className="fixed top-6 right-6 z-50 bg-blue-50 rounded-lg border border-blue-200 text-blue-800 px-4 py-2 animate-in pointer-events-none shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+            </span>
+            <span className="text-sm font-medium">Click anywhere to place a note</span>
+          </div>
         </div>
       )}
     </div>
