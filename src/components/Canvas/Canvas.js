@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { CanvasContext } from './CanvasContext';
 
 export default function Canvas({ children, bgColor, onBoardClick, onBoardDrop }) {
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(0.1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   
   const isDraggingRef = useRef(false);
