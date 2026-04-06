@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useCanvas } from '../Canvas/CanvasContext';
 
@@ -11,12 +11,23 @@ export default function ArrowItem({ item, onDelete, onUpdate, onDuplicate, isHos
   
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef({ x: 0, y: 0, scale: 1 });
+  const containerRef = useRef(null);
 
   const [showColorPicker, setShowColorPicker] = useState(false);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showColorPicker && containerRef.current && !containerRef.current.contains(e.target)) {
+        setShowColorPicker(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
+  }, [showColorPicker]);
+
   const handleDoubleClick = (e) => {
     if (activeTool === 'pointer' && isHost) {
-      setShowColorPicker(!showColorPicker);
+      setShowColorPicker(true);
       e.stopPropagation();
     }
   };
@@ -26,7 +37,10 @@ export default function ArrowItem({ item, onDelete, onUpdate, onDuplicate, isHos
     if (e.target.tagName.toLowerCase() === 'button' || e.target.closest('button')) return;
 
     e.stopPropagation();
-    if (showColorPicker) setShowColorPicker(false);
+    
+    if (activeTool === 'pointer' && isHost && !showColorPicker) {
+      setShowColorPicker(true);
+    }
     
     if (e.shiftKey && onDuplicate) {
       onDuplicate(item);
@@ -97,6 +111,7 @@ export default function ArrowItem({ item, onDelete, onUpdate, onDuplicate, isHos
 
   return (
     <div
+      ref={containerRef}
       className={`text-node ${isDragging || isResizing ? 'text-dragging' : 'text-idle'}`}
       style={{
         left: item.x,
