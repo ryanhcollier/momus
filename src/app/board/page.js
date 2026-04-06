@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import Canvas from '@/components/Canvas/Canvas';
-import StickyNote from '@/components/Items/StickyNote';
+import Note from '@/components/Items/Note';
 import MediaItem from '@/components/Items/MediaItem';
 import ArtboardItem from '@/components/Items/ArtboardItem';
 import Toolbar from '@/components/Controls/Toolbar';
@@ -203,7 +203,7 @@ function BoardContent() {
         {normalizedItems.map((item) => {
           if (item.type === 'note') {
             return (
-              <StickyNote 
+              <Note 
                 key={item.id} 
                 item={item} 
                 isHost={isHost} 

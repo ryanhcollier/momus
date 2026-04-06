@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useCanvas } from '../Canvas/CanvasContext';
 
-export default function StickyNote({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool }) {
+export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool }) {
   const { scale } = useCanvas();
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ pointerX: 0, pointerY: 0, itemX: 0, itemY: 0 });
