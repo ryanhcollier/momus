@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { MousePointer2, StickyNote, Image as ImageIcon, Video, Link as LinkIcon, Upload, Check } from 'lucide-react';
+import { MousePointer2, Type, Frame, Image as ImageIcon, Video, Link as LinkIcon, Upload, Check } from 'lucide-react';
+import { useMutation } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 
 export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd }) {
   const [showSubMenu, setShowSubMenu] = useState(null); // 'image' or 'video'
@@ -24,9 +26,11 @@ export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd 
     onMediaAdd(showSubMenu, urlInput);
     setUrlInput('');
     setShowSubMenu(null);
-    setActiveTool('pointer'); // revert to pointer to let them drag it or click it
-    // Actually, media items show up at (0,0) or center. Let's make them appear at board origin (0,0)
+    setActiveTool('pointer');
   };
+
+  const generateUploadUrl = useMutation(api.items.generateUploadUrl);
+  const getUploadUrl = useMutation(api.items.getUploadUrl);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -34,21 +38,29 @@ export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd 
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
+      // 1. Generate short-lived upload URL
+      const postUrl = await generateUploadUrl();
+
+      // 2. Post file directly to Convex Storage
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
       });
       
-      if (res.ok) {
-        const data = await res.json();
-        onMediaAdd(showSubMenu, data.url);
+      if (!result.ok) throw new Error("Upload failed");
+      
+      const { storageId } = await result.json();
+
+      // 3. Resolve storageId into full HTTPS URL
+      const fileUrl = await getUploadUrl({ storageId });
+
+      if (fileUrl) {
+        onMediaAdd(showSubMenu, fileUrl);
         setShowSubMenu(null);
         setActiveTool('pointer');
       } else {
-        alert('File upload failed');
+        alert('Could not resolve file URL');
       }
     } catch (error) {
       console.error(error);
@@ -59,50 +71,48 @@ export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd 
   };
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-4">
+    <div className="toolbar-container">
       
       {/* Sub Menu Overlay */}
       {showSubMenu && (
-        <div className="glass-panel p-4 animate-in w-80 text-white border-white/20">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+        <div className="toolbar-submenu animate-in">
+          <h3 className="toolbar-submenu-title">
             {showSubMenu === 'image' ? <ImageIcon size={16}/> : <Video size={16}/>} 
             Add {showSubMenu === 'image' ? 'Image' : 'Video'}
           </h3>
           
-          <div className="space-y-4">
-            <form onSubmit={submitUrl} className="flex gap-2">
+          <div className="spacing-y-4">
+            <form onSubmit={submitUrl} className="flex-gap-2">
               <input 
                 type="url" 
                 placeholder="Paste URL..." 
-                className="input-field py-2 text-sm flex-1 bg-white/10"
+                className="toolbar-input"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
               />
-              <button type="submit" className="bg-primary hover:bg-primary-hover px-3 rounded-lg flex items-center justify-center">
+              <button type="submit" className="btn-primary" style={{padding: '8px 12px'}}>
                 <Check size={16} />
               </button>
             </form>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10"></div>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-transparent px-2 text-gray-400">or</span>
+            <div className="z-10" style={{borderTop: '1px solid rgba(255,255,255,0.1)', margin: '1rem 0', position: 'relative'}}>
+              <div style={{position: 'absolute', top: '-0.75rem', left: '50%', transform: 'translateX(-50%)', background: 'var(--shade-admin-bg)', padding: '0 0.5rem', fontSize: '0.75rem', color: '#9ca3af'}}>
+                or
               </div>
             </div>
 
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="w-full glass-panel py-2 text-sm flex items-center justify-center gap-2 hover:bg-white/10 transition-colors"
+              className="glass-panel w-full flex-center-gap"
+              style={{padding: '0.5rem', fontSize: '0.875rem', border: 'none', background: 'rgba(255,255,255,0.05)', color: 'white', transition: 'background 0.2s', cursor: 'pointer', borderRadius: '8px'}}
             >
               <Upload size={16} />
               {isUploading ? 'Uploading...' : 'Upload File'}
             </button>
             <input 
               type="file" 
-              className="hidden" 
+              style={{display: 'none'}} 
               ref={fileInputRef}
               accept={showSubMenu === 'image' ? "image/png, image/jpeg, image/jpg" : "video/mp4, video/quicktime"}
               onChange={handleFileUpload}
@@ -112,37 +122,47 @@ export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd 
       )}
 
       {/* Main Toolbar */}
-      <div className="bg-white rounded-xl px-2 py-1.5 flex items-center gap-1 shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 mb-6">
+      <div className="toolbar-main">
         <button 
           onClick={() => handleToolClick('pointer')}
-          className={`btn-icon !w-10 !h-10 ${activeTool === 'pointer' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
+          className={`toolbar-btn ${activeTool === 'pointer' ? 'toolbar-btn-active' : ''}`}
           title="Pointer tool"
         >
           <MousePointer2 size={18} />
         </button>
 
-        <div className="w-px h-5 bg-gray-200 mx-1"></div>
+        <div className="toolbar-divider"></div>
 
         <button 
           onClick={() => handleToolClick('note')}
-          className={`btn-icon !w-10 !h-10 ${activeTool === 'note' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
-          title="Add Sticky Note"
+          className={`toolbar-btn ${activeTool === 'note' ? 'toolbar-btn-active' : ''}`}
+          title="Add Text"
         >
-          <StickyNote size={18} />
+          <Type size={18} />
         </button>
+
+        {isHost && (
+          <button 
+            onClick={() => handleToolClick('artboard')}
+            className={`toolbar-btn ${activeTool === 'artboard' ? 'toolbar-btn-active' : ''}`}
+            title="Add Artboard"
+          >
+            <Frame size={18} />
+          </button>
+        )}
 
         {isHost && (
           <>
             <button 
               onClick={() => handleToolClick('image')}
-              className={`btn-icon !w-10 !h-10 ${activeTool === 'image' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
+              className={`toolbar-btn ${activeTool === 'image' ? 'toolbar-btn-active' : ''}`}
               title="Add Image"
             >
               <ImageIcon size={18} />
             </button>
             <button 
               onClick={() => handleToolClick('video')}
-              className={`btn-icon !w-10 !h-10 ${activeTool === 'video' ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
+              className={`toolbar-btn ${activeTool === 'video' ? 'toolbar-btn-active' : ''}`}
               title="Add Video"
             >
               <Video size={18} />

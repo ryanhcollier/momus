@@ -4,15 +4,18 @@ import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useCanvas } from '../Canvas/CanvasContext';
 
-export default function StickyNote({ item, onDelete, onUpdate, isHost, activeTool }) {
+export default function StickyNote({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool }) {
   const { scale } = useCanvas();
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ x: 0, y: 0 });
+  const dragStartRef = useRef({ pointerX: 0, pointerY: 0, itemX: 0, itemY: 0 });
+  
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartRef = useRef({ x: 0, y: 0, scale: 1 });
+
   const [isEditing, setIsEditing] = useState(!item.text); // auto-edit if empty
   const [localText, setLocalText] = useState(item.text);
   const inputRef = useRef(null);
 
-  // Auto-focus when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -29,27 +32,30 @@ export default function StickyNote({ item, onDelete, onUpdate, isHost, activeToo
   const handleBlur = () => {
     setIsEditing(false);
     if (localText !== item.text && onUpdate) {
-      // Ensure we push optimistic local update
       onUpdate(item.id, { text: localText });
     }
   };
 
-  // Simple array of colors to pick from based on ID hash
-  const colors = ['bg-note-yellow', 'bg-note-blue', 'bg-note-pink', 'bg-note-green'];
-  const colorIndex = item.id.charCodeAt(0) % colors.length;
-  const bgColorClass = colors[colorIndex];
+  // No longer using card background colors. Text nodes only.
 
   const handlePointerDown = (e) => {
-    // Only drag with pointer tool and left mouse button
     if (activeTool !== 'pointer' || e.button !== 0) return;
-    
-    // Don't drag if clicking the delete button or typing in text
     if (e.target.tagName.toLowerCase() === 'button' || e.target.closest('button')) return;
     if (e.target.tagName.toLowerCase() === 'textarea' || e.target.tagName.toLowerCase() === 'input' || e.target.isContentEditable) return;
 
-    e.stopPropagation(); // prevent canvas pan
+    e.stopPropagation();
+    
+    if (e.shiftKey && onDuplicate) {
+      onDuplicate(item);
+    }
+    
     setIsDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    dragStartRef.current = { 
+      pointerX: e.clientX, 
+      pointerY: e.clientY, 
+      itemX: item.x, 
+      itemY: item.y 
+    };
     e.target.setPointerCapture(e.pointerId);
   };
 
@@ -57,17 +63,13 @@ export default function StickyNote({ item, onDelete, onUpdate, isHost, activeToo
     if (!isDragging) return;
     e.stopPropagation();
 
-    const dx = e.clientX - dragStartRef.current.x;
-    const dy = e.clientY - dragStartRef.current.y;
+    const dx = e.clientX - dragStartRef.current.pointerX;
+    const dy = e.clientY - dragStartRef.current.pointerY;
     
-    // Scale delta appropriately to canvas coordinates
-    const newX = item.x + dx / scale;
-    const newY = item.y + dy / scale;
+    const newX = dragStartRef.current.itemX + dx / scale;
+    const newY = dragStartRef.current.itemY + dy / scale;
 
-    // Optimistic local update
     if (onUpdate) onUpdate(item.id, { x: newX, y: newY });
-    
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
   };
 
   const handlePointerUp = (e) => {
@@ -78,17 +80,44 @@ export default function StickyNote({ item, onDelete, onUpdate, isHost, activeToo
     }
   };
 
+  const handleResizeDown = (e) => {
+    if (activeTool !== 'pointer' || e.button !== 0) return;
+    e.stopPropagation();
+    setIsResizing(true);
+    resizeStartRef.current = { x: e.clientX, y: e.clientY, scale: item.scale || 1 };
+    e.target.setPointerCapture(e.pointerId);
+  };
+
+  const handleResizeMove = (e) => {
+    if (!isResizing) return;
+    e.stopPropagation();
+    
+    const dx = e.clientX - resizeStartRef.current.x;
+    // Base width reference. Scaling 100px of drag represents 1.0 scale growth.
+    const sensitivity = 100 * scale; 
+    const newScale = Math.max(0.2, resizeStartRef.current.scale + (dx / sensitivity));
+    
+    if (onUpdate) onUpdate(item.id, { scale: newScale });
+  };
+
+  const handleResizeUp = (e) => {
+    if (isResizing) {
+      e.stopPropagation();
+      setIsResizing(false);
+      e.target.releasePointerCapture(e.pointerId);
+    }
+  };
+
   return (
     <div
-      className={`absolute w-64 h-64 p-5 flex flex-col pt-8 transition-all duration-300 group ${bgColorClass} ${isDragging ? 'shadow-2xl z-50 scale-105 cursor-grabbing' : 'hover:-translate-y-2 hover:scale-[1.02] cursor-grab'}`}
+      className={`text-node ${isDragging || isResizing ? 'text-dragging' : 'text-idle'}`}
       style={{
         left: item.x,
         top: item.y,
-        transform: isDragging ? 'none' : `rotate(${(item.id.charCodeAt(1) % 5) - 2}deg)`,
-        boxShadow: isDragging ? 'var(--shadow-note-hover)' : 'var(--shadow-note)',
-        borderRadius: '2px 12px 16px 2px',
-        // prevent initial transition when dragging starts to stay snapped to mouse
-        transitionDuration: isDragging ? '0ms' : '300ms'
+        transform: `scale(${item.scale || 1})`,
+        transformOrigin: 'top left',
+        zIndex: item.z_index !== undefined ? item.z_index : 2,
+        transitionDuration: isDragging || isResizing ? '0ms' : '150ms'
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -98,33 +127,37 @@ export default function StickyNote({ item, onDelete, onUpdate, isHost, activeToo
     >
       <button 
         onClick={() => onDelete(item.id)}
-        className="absolute top-2 right-2 text-black/40 hover:text-black transition-colors bg-black/5 hover:bg-black/10 rounded-full p-1 opacity-0 group-hover:opacity-100 z-10"
+        className="text-node-delete-btn"
       >
         <X size={16} />
       </button>
 
-      {/* Note: In a real app we might want this to be contentEditable and save text changes. */}
       {isEditing ? (
         <textarea
           ref={inputRef}
           value={localText}
           onChange={(e) => setLocalText(e.target.value)}
           onBlur={handleBlur}
-          onPointerDown={(e) => e.stopPropagation()} // exclude drag while typing
-          className="flex-1 w-full bg-transparent border-none resize-none outline-none text-black/80 font-medium text-lg leading-relaxed overflow-auto overflow-wrap"
+          onPointerDown={(e) => e.stopPropagation()}
+          className="text-node-textarea"
           placeholder="Type here..."
+          autoFocus
         />
       ) : (
-        <div className="flex-1 w-full bg-transparent border-none resize-none outline-none text-black/80 font-medium text-lg leading-relaxed overflow-auto overflow-wrap filter drop-shadow-sm select-none">
-          {item.text || 'Double-click to edit'}
+        <div className="text-node-display">
+          {item.text || 'Double-click to type'}
         </div>
       )}
-      
-      {/* Premium semi-transparent tape decoration */}
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-white/30 backdrop-blur-md shadow-sm rotate-1 rounded-sm border border-white/20 pointer-events-none" />
-      
-      {/* Folded corner illusion */}
-      <div className="absolute bottom-0 right-0 w-8 h-8 bg-black/5 rounded-tl-xl clip-path-fold pointer-events-none" style={{clipPath: 'polygon(100% 0, 0 100%, 100% 100%)'}} />
+
+      {activeTool === 'pointer' && isHost && (
+        <div 
+          className="resize-handle"
+          onPointerDown={handleResizeDown}
+          onPointerMove={handleResizeMove}
+          onPointerUp={handleResizeUp}
+          onPointerCancel={handleResizeUp}
+        />
+      )}
     </div>
   );
 }

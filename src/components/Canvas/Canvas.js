@@ -11,21 +11,17 @@ export default function Canvas({ children, bgColor, onBoardClick }) {
   const lastMousePosRef = useRef({ x: 0, y: 0 });
   const containerRef = useRef(null);
 
-  // Handle zooming
   const handleWheel = (e) => {
     e.preventDefault();
-    // Zoom on any scroll event
-    const zoomSensitivity = 0.005;
+    const zoomSensitivity = 0.002;
     const zoomFactor = -e.deltaY * zoomSensitivity;
-    const newScale = Math.min(Math.max(scale + zoomFactor, 0.1), 5); // limit scale 0.1x to 5x
+    const newScale = Math.min(Math.max(scale + zoomFactor, 0.1), 5);
     
-    // Calculate cursor position relative to the container for zooming exactly to the cursor
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const cursorX = e.clientX - rect.left;
       const cursorY = e.clientY - rect.top;
       
-      // Adjust position so the point under the cursor stays the same
       const scaleChange = newScale - scale;
       const newX = position.x - (cursorX - position.x) * (scaleChange / scale);
       const newY = position.y - (cursorY - position.y) * (scaleChange / scale);
@@ -36,7 +32,6 @@ export default function Canvas({ children, bgColor, onBoardClick }) {
   };
 
   const handlePointerDown = (e) => {
-    // Only pan on middle mouse or if clicking on the background (not an item)
     if (e.target === containerRef.current || e.button === 1) {
       isDraggingRef.current = true;
       lastMousePosRef.current = { x: e.clientX, y: e.clientY };
@@ -65,7 +60,6 @@ export default function Canvas({ children, bgColor, onBoardClick }) {
     }
   };
 
-  // Add passive event listener for wheel to prevent default behavior
   useEffect(() => {
     const el = containerRef.current;
     if (el) {
@@ -77,7 +71,6 @@ export default function Canvas({ children, bgColor, onBoardClick }) {
 
   const handleBackgroundClick = (e) => {
     if (e.target === containerRef.current && onBoardClick) {
-      // Calculate coordinates relative to the canvas origin (0,0 point)
       const rect = containerRef.current.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const clickY = e.clientY - rect.top;
@@ -89,14 +82,16 @@ export default function Canvas({ children, bgColor, onBoardClick }) {
     }
   };
 
-  // Figma-like dot grid parameters
-  const gridSize = 40 * scale; 
-  const dotSize = 2; // subtle dots
+  const gridSize = 14; 
+  const dotSize = 1;
+
+  // Add the provided background color class if needed, or default. 
+  // We'll let the layout handle the bg_color, and here we just act as container.
 
   return (
     <div 
       ref={containerRef}
-      className={`absolute inset-0 overflow-hidden select-none outline-none ${bgColor}`}
+      className="canvas-container"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -104,19 +99,18 @@ export default function Canvas({ children, bgColor, onBoardClick }) {
       onClick={handleBackgroundClick}
       style={{ 
         cursor: isDraggingRef.current ? 'grabbing' : 'auto',
-        // Dot Grid Background (Dark dots for light mode)
-        backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.06) ${dotSize}px, transparent ${dotSize}px)`,
+        backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.08) ${dotSize}px, transparent ${dotSize}px)`,
         backgroundSize: `${gridSize}px ${gridSize}px`,
         backgroundPosition: `${position.x}px ${position.y}px`,
       }}
     >
       <CanvasContext.Provider value={{ scale, position }}>
         <div 
-          className="absolute origin-top-left transition-transform duration-75 ease-out will-change-transform"
+          className="canvas-inner"
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             width: '1px',
-            height: '1px' // Act as an origin anchor
+            height: '1px'
           }}
         >
           {children}
