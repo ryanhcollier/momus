@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CanvasContext } from './CanvasContext';
 
-export default function Canvas({ children, bgColor, onBoardClick }) {
+export default function Canvas({ children, bgColor, onBoardClick, onBoardDrop }) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   
@@ -82,6 +82,25 @@ export default function Canvas({ children, bgColor, onBoardClick }) {
     }
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault(); // allow dropping
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (onBoardDrop && e.dataTransfer.files?.length > 0) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const dropX = e.clientX - rect.left;
+      const dropY = e.clientY - rect.top;
+      
+      const canvasX = (dropX - position.x) / scale;
+      const canvasY = (dropY - position.y) / scale;
+      
+      onBoardDrop(Array.from(e.dataTransfer.files), canvasX, canvasY);
+    }
+  };
+
   const gridSize = 14; 
   const dotSize = 1;
 
@@ -97,6 +116,8 @@ export default function Canvas({ children, bgColor, onBoardClick }) {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onClick={handleBackgroundClick}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       style={{ 
         cursor: isDraggingRef.current ? 'grabbing' : 'auto',
         backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.08) ${dotSize}px, transparent ${dotSize}px)`,

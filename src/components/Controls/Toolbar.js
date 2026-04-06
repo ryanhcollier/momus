@@ -5,7 +5,7 @@ import { MousePointer2, Type, Frame, Image as ImageIcon, Video, Link as LinkIcon
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 
-export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd }) {
+export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd, onFileUpload }) {
   const [showSubMenu, setShowSubMenu] = useState(null); // 'image' or 'video'
   const [urlInput, setUrlInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -29,41 +29,16 @@ export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd 
     setActiveTool('pointer');
   };
 
-  const generateUploadUrl = useMutation(api.items.generateUploadUrl);
-  const getUploadUrl = useMutation(api.items.getUploadUrl);
-
-  const handleFileUpload = async (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
     try {
-      // 1. Generate short-lived upload URL
-      const postUrl = await generateUploadUrl();
-
-      // 2. Post file directly to Convex Storage
-      const result = await fetch(postUrl, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      
-      if (!result.ok) throw new Error("Upload failed");
-      
-      const { storageId } = await result.json();
-
-      // 3. Resolve storageId into full HTTPS URL
-      const fileUrl = await getUploadUrl({ storageId });
-
-      if (fileUrl) {
-        onMediaAdd(showSubMenu, fileUrl);
-        setShowSubMenu(null);
-        setActiveTool('pointer');
-      } else {
-        alert('Could not resolve file URL');
-      }
+      await onFileUpload(file, showSubMenu);
+      setShowSubMenu(null);
+      setActiveTool('pointer');
     } catch (error) {
-      console.error(error);
       alert('File upload failed');
     } finally {
       setIsUploading(false);
@@ -114,8 +89,8 @@ export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd 
               type="file" 
               style={{display: 'none'}} 
               ref={fileInputRef}
-              accept={showSubMenu === 'image' ? "image/png, image/jpeg, image/jpg" : "video/mp4, video/quicktime"}
-              onChange={handleFileUpload}
+              accept={showSubMenu === 'image' ? "image/png, image/jpeg, image/jpg, image/webp" : "video/mp4, video/quicktime, video/webm"}
+              onChange={handleFileChange}
             />
           </div>
         </div>

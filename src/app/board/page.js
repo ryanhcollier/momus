@@ -25,6 +25,9 @@ function BoardContent() {
   const addItemMutation = useMutation(api.items.addItem);
   const updateItemMutation = useMutation(api.items.updateItem);
   const deleteItemMutation = useMutation(api.items.deleteItem);
+  
+  const generateUploadUrl = useMutation(api.items.generateUploadUrl);
+  const getUploadUrl = useMutation(api.items.getUploadUrl);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -76,16 +79,59 @@ function BoardContent() {
     }
   };
 
-  const handleMediaAdd = async (type, url) => {
+  const handleMediaAdd = async (type, url, x = 0, y = 0) => {
     await addItemMutation({
       boardId: id,
       type,
       content: url, // For media, 'content' is the URL
-      x: 0,
-      y: 0,
+      x,
+      y,
       zIndex: 2,
     });
     setActiveTool('pointer');
+  };
+
+  const handleFileUploadJob = async (file, forceType = null) => {
+    const postUrl = await generateUploadUrl();
+    const result = await fetch(postUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!result.ok) throw new Error("Upload failed");
+    
+    const { storageId } = await result.json();
+    const fileUrl = await getUploadUrl({ storageId });
+    if (!fileUrl) throw new Error("Could not resolve file URL");
+
+    let type = forceType;
+    if (!type) {
+      if (file.type.startsWith('image/')) type = 'image';
+      else if (file.type.startsWith('video/')) type = 'video';
+      else type = 'image';
+    }
+    return { fileUrl, type };
+  };
+
+  const handleToolbarUpload = async (file, type) => {
+    const { fileUrl } = await handleFileUploadJob(file, type);
+    handleMediaAdd(type, fileUrl, 0, 0); // Origin drop for toolbar invokes
+  };
+
+  const handleCanvasDrop = async (files, canvasX, canvasY) => {
+    if (!isHost) return; // Prevent unauthorized drops
+    
+    let offset = 0;
+    for (const file of files) {
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) continue;
+      try {
+        const { fileUrl, type } = await handleFileUploadJob(file);
+        handleMediaAdd(type, fileUrl, canvasX + offset, canvasY + offset);
+        offset += 40; // cascade stack visual offset
+      } catch (err) {
+        console.error('File drop upload failed:', err);
+      }
+    }
   };
 
   const handleUpdateItem = async (itemId, updates) => {
@@ -153,7 +199,7 @@ function BoardContent() {
 
   return (
     <div className={`board-layout ${board.bg_color}`}>
-      <Canvas bgColor={board.bg_color} onBoardClick={handleBoardClick}>
+      <Canvas bgColor={board.bg_color} onBoardClick={handleBoardClick} onBoardDrop={handleCanvasDrop}>
         {normalizedItems.map((item) => {
           if (item.type === 'note') {
             return (
@@ -201,9 +247,20 @@ function BoardContent() {
         activeTool={activeTool} 
         setActiveTool={setActiveTool} 
         onMediaAdd={handleMediaAdd} 
+        onFileUpload={handleToolbarUpload}
       />
       
       <div className="board-topbar-clean">
+        <h1 style={{
+          fontSize: '2.5rem', 
+          fontWeight: 800, 
+          letterSpacing: '-0.05em', 
+          lineHeight: 1, 
+          color: board.bg_color === 'bg-shade-4' || board.bg_color === 'bg-shade-5' ? '#ffffff' : '#111827',
+          marginBottom: '6px'
+        }}>
+          MOMUS
+        </h1>
         <h2 className={`board-title-clean ${
           board.bg_color === 'bg-shade-4' || board.bg_color === 'bg-shade-5' 
             ? 'text-inverted-light' 
