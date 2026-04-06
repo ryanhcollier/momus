@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { MousePointer2, Type, Frame, Image as ImageIcon, Video, Link as LinkIcon, Upload, Check } from 'lucide-react';
+import { MousePointer2, Type, Frame, Image as ImageIcon, Video, Link as LinkIcon, Upload, Check, Circle, ArrowUpRight } from 'lucide-react';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 
@@ -114,6 +114,22 @@ export default function Toolbar({ isHost, activeTool, setActiveTool, onMediaAdd,
           title="Add Text"
         >
           <Type size={18} />
+        </button>
+
+        <button 
+          onClick={() => handleToolClick('circle')}
+          className={`toolbar-btn ${activeTool === 'circle' ? 'toolbar-btn-active' : ''}`}
+          title="Add Circle"
+        >
+          <Circle size={18} />
+        </button>
+
+        <button 
+          onClick={() => handleToolClick('arrow')}
+          className={`toolbar-btn ${activeTool === 'arrow' ? 'toolbar-btn-active' : ''}`}
+          title="Add Arrow"
+        >
+          <ArrowUpRight size={18} />
         </button>
 
         {isHost && (

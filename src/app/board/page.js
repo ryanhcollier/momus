@@ -6,6 +6,8 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import Canvas from '@/components/Canvas/Canvas';
 import Note from '@/components/Items/Note';
+import CircleItem from '@/components/Items/CircleItem';
+import ArrowItem from '@/components/Items/ArrowItem';
 import MediaItem from '@/components/Items/MediaItem';
 import ArtboardItem from '@/components/Items/ArtboardItem';
 import Toolbar from '@/components/Controls/Toolbar';
@@ -74,6 +76,17 @@ function BoardContent() {
         x,
         y,
         zIndex: 1, // Underneath everything
+      });
+      setActiveTool('pointer');
+    } else if (activeTool === 'circle' || activeTool === 'arrow') {
+      await addItemMutation({
+        boardId: id,
+        type: activeTool,
+        content: '',
+        x: x - 50, // Center the default 100x100 frame
+        y: y - 50,
+        zIndex: 2,
+        color: '#ffffff',
       });
       setActiveTool('pointer');
     }
@@ -226,6 +239,30 @@ function BoardContent() {
                 activeTool={activeTool}
               />
             );
+          } else if (item.type === 'circle') {
+            return (
+              <CircleItem 
+                key={item.id} 
+                item={item} 
+                isHost={isHost} 
+                onDelete={handleDeleteItem} 
+                onUpdate={handleUpdateItem}
+                onDuplicate={handleDuplicateItem}
+                activeTool={activeTool}
+              />
+            );
+          } else if (item.type === 'arrow') {
+            return (
+              <ArrowItem 
+                key={item.id} 
+                item={item} 
+                isHost={isHost} 
+                onDelete={handleDeleteItem} 
+                onUpdate={handleUpdateItem}
+                onDuplicate={handleDuplicateItem}
+                activeTool={activeTool}
+              />
+            );
           } else {
             return (
               <MediaItem 
@@ -270,14 +307,16 @@ function BoardContent() {
         </h2>
       </div>
 
-      {activeTool === 'note' && (
+      {(activeTool === 'note' || activeTool === 'circle' || activeTool === 'arrow') && (
         <div className="tool-tip animate-in">
           <div className="flex-center-gap">
             <span className="radar-blip">
               <span className="ping"></span>
               <span className="dot"></span>
             </span>
-            <span className="text-sm font-medium">Click anywhere to place a note</span>
+            <span className="text-sm font-medium">
+              Click anywhere to place a {activeTool}
+            </span>
           </div>
         </div>
       )}

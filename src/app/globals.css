@@ -429,8 +429,8 @@ a {
 .text-node-delete-btn { position: absolute; top: -0.5rem; right: -0.5rem; color: white; background: #ef4444; border-radius: 9999px; padding: 0.15rem; opacity: 0; z-index: 10; transition: all 0.2s; display: flex; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 .text-node:hover .text-node-delete-btn { opacity: 1; }
 .text-node-delete-btn:hover { background: #dc2626; transform: scale(1.1); }
-.text-node-textarea { flex: 1; width: 100%; background: transparent; border: none; outline: none; color: white; font-weight: 500; font-size: 1.25rem; line-height: 1.5; overflow: hidden; resize: none; text-shadow: 0 2px 4px rgba(0,0,0,0.5); font-family: var(--font-sans); }
-.text-node-display { flex: 1; width: 100%; color: white; font-weight: 500; font-size: 1.25rem; line-height: 1.5; overflow: hidden; overflow-wrap: break-word; user-select: none; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.text-node-textarea { flex: 1; width: 100%; background: transparent; border: none; outline: none; color: white; font-weight: 500; font-size: 1.25rem; line-height: 1.5; overflow: hidden; resize: none; font-family: var(--font-sans); }
+.text-node-display { flex: 1; width: 100%; color: white; font-weight: 500; font-size: 1.25rem; line-height: 1.5; overflow: hidden; overflow-wrap: break-word; user-select: none; }
 
 /* Canvas */
 .canvas-container { position: absolute; inset: 0; overflow: hidden; user-select: none; outline: none; }
