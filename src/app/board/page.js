@@ -252,7 +252,7 @@ function BoardContent() {
       
       <div className="board-topbar-clean">
         <h1 style={{
-          fontSize: '2.5rem', 
+          fontSize: '1.25rem', 
           fontWeight: 800, 
           letterSpacing: '-0.05em', 
           lineHeight: 1, 
