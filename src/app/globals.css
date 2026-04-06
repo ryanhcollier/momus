@@ -359,12 +359,12 @@ a {
 .media-item:hover .resize-handle, .text-node:hover .resize-handle { opacity: 1; }
 
 /* MediaItem */
-.media-item { position: absolute; box-shadow: var(--shadow-premium); background: transparent; }
-.media-item::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); pointer-events: none; transition: box-shadow 0.2s; }
+.media-item { position: absolute; background: transparent; }
+.media-item::after { content: ''; position: absolute; inset: 0; pointer-events: none; transition: box-shadow 0.2s; }
 .media-dragging { z-index: 50; cursor: grabbing; }
 .media-idle { cursor: grab; }
 .media-idle:hover::after { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3); }
-.media-delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; z-index: 20; width: 2rem; height: 2rem; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); color: white; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.2s; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); }
+.media-delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; z-index: 20; width: 1.25rem; height: 1.25rem; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); color: white; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; }
 .media-item:hover .media-delete-btn { opacity: 1; }
 .media-delete-btn:hover { background: #ef4444; transform: scale(1.1); }
 .media-image { object-fit: contain; max-width: 42rem; max-height: 80vh; pointer-events: none; user-select: none; }
@@ -426,7 +426,7 @@ a {
 .text-dragging { z-index: 50; cursor: grabbing; transform: scale(1.02); }
 .text-idle { cursor: grab; }
 .text-idle:hover { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); }
-.text-node-delete-btn { position: absolute; top: -0.75rem; right: -0.75rem; color: white; background: #ef4444; border-radius: 9999px; padding: 0.25rem; opacity: 0; z-index: 10; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.text-node-delete-btn { position: absolute; top: -0.5rem; right: -0.5rem; color: white; background: #ef4444; border-radius: 9999px; padding: 0.15rem; opacity: 0; z-index: 10; transition: all 0.2s; display: flex; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 .text-node:hover .text-node-delete-btn { opacity: 1; }
 .text-node-delete-btn:hover { background: #dc2626; transform: scale(1.1); }
 .text-node-textarea { flex: 1; width: 100%; background: transparent; border: none; outline: none; color: white; font-weight: 500; font-size: 1.25rem; line-height: 1.5; overflow: hidden; resize: none; text-shadow: 0 2px 4px rgba(0,0,0,0.5); font-family: var(--font-sans); }

@@ -129,7 +129,7 @@ export default function StickyNote({ item, onDelete, onUpdate, onDuplicate, isHo
         onClick={() => onDelete(item.id)}
         className="text-node-delete-btn"
       >
-        <X size={16} />
+        <X size={12} />
       </button>
 
       {isEditing ? (

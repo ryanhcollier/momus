@@ -99,10 +99,10 @@ export default function MediaItem({ item, onDelete, onUpdate, onDuplicate, isHos
     >
       {isHost && (
         <button 
-          onClick={() => onDelete(item.id)}
           className="media-delete-btn"
+          onClick={() => onDelete(item.id)}
         >
-          <X size={16} />
+          <X size={12} />
         </button>
       )}
 

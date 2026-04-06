@@ -163,13 +163,19 @@ export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, is
           </span>
         )}
 
+        {isResizing && (
+          <span className="artboard-display" style={{ color: '#3b82f6' }}>
+            {Math.round(640 * (item.scale || 1))} x {Math.round(360 * (item.scale || 1))}
+          </span>
+        )}
+
         {isHost && (
           <button 
             onClick={() => onDelete(item.id)}
             style={{ color: '#ef4444' }}
             className="artboard-delete-btn"
           >
-            <X size={14} />
+            <X size={12} />
           </button>
         )}
       </div>
