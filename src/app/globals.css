@@ -356,7 +356,7 @@ a {
 .resize-handle { position: absolute; bottom: 0; right: 0; width: 1.5rem; height: 1.5rem; cursor: nwse-resize; z-index: 60; opacity: 0; transition: opacity 0.2s; display: flex; align-items: flex-end; justify-content: flex-end; padding: 4px; pointer-events: auto; }
 .resize-handle::after { content: ''; width: 8px; height: 8px; border-right: 2px solid rgba(255,255,255,0.8); border-bottom: 2px solid rgba(255,255,255,0.8); border-radius: 1px; margin-bottom: 4px; margin-right: 4px; transition: transform 0.2s; }
 .resize-handle:hover::after { transform: scale(1.2); }
-.media-item:hover .resize-handle, .text-node:hover .resize-handle { opacity: 1; }
+.media-item:hover .resize-handle, .text-node:hover .resize-handle, .text-node:hover .width-resize-handle { opacity: 1; }
 
 /* MediaItem */
 .media-item { position: absolute; background: transparent; }

@@ -15,5 +15,6 @@ export default defineSchema({
     z_index: v.number(),
     color: v.optional(v.string()), // for sticky notes
     scale: v.optional(v.number()), // for resizing elements
+    width: v.optional(v.number()), // for custom width text wrapping
   }).index("by_board", ["board_id"]),
 });

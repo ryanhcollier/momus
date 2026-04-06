@@ -21,6 +21,7 @@ export const addItem = mutation({
     zIndex: v.number(),
     color: v.optional(v.string()),
     scale: v.optional(v.number()),
+    width: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("items", {
@@ -32,6 +33,7 @@ export const addItem = mutation({
       z_index: args.zIndex,
       color: args.color,
       scale: args.scale !== undefined ? args.scale : 1,
+      width: args.width,
     });
   },
 });
@@ -45,6 +47,7 @@ export const updateItem = mutation({
     content: v.optional(v.string()),
     color: v.optional(v.string()),
     scale: v.optional(v.number()),
+    width: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
