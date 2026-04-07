@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useCanvas } from '../Canvas/CanvasContext';
 
-export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool, allItems = [] }) {
+export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool, allItems = [], selected, onSelect, selectedIds }) {
   const { scale } = useCanvas();
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ pointerX: 0, pointerY: 0, itemX: 0, itemY: 0 });
@@ -27,7 +27,7 @@ export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, is
   const handleDoubleClick = (e) => {
     if (activeTool === 'pointer' && isHost) {
       setIsEditing(true);
-      e.stopPropagation();
+      if (onSelect) onSelect(item.id, false);
     }
   };
 
@@ -45,18 +45,39 @@ export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, is
 
     e.stopPropagation();
     
-    if (e.shiftKey && onDuplicate) {
+    if (activeTool === 'pointer' && isHost && onSelect) {
+      onSelect(item.id, e.shiftKey);
+    }
+    
+    if (e.altKey && onDuplicate) {
       onDuplicate(item);
     }
     
-    // Capture any items fully or partially sitting on top of the artboard at initialization
+    const draggingItemsMap = new Map();
+    // 1. Add spatial geometric structural children (classic Artboard drag)
     const width = 640 * (item.scale || 1);
     const height = 360 * (item.scale || 1);
-    childrenRef.current = allItems.filter(child => {
-      if (child.id === item.id || child.type === 'artboard') return false;
-      return child.x >= item.x && child.x <= (item.x + width) &&
-             child.y >= item.y && child.y <= (item.y + height);
-    }).map(c => ({ id: c.id, startX: c.x, startY: c.y }));
+    allItems.forEach(child => {
+      if (child.id === item.id || child.type === 'artboard') return;
+      if (child.x >= item.x && child.x <= (item.x + width) &&
+          child.y >= item.y && child.y <= (item.y + height)) {
+        draggingItemsMap.set(child.id, { id: child.id, startX: child.x, startY: child.y });
+      }
+    });
+
+    // 2. Add explicit active multi-selected items (if this Artboard is one of the targeted masters)
+    if (selectedIds && selectedIds.includes(item.id)) {
+      allItems.forEach(i => {
+        if (selectedIds.includes(i.id)) {
+          draggingItemsMap.set(i.id, { id: i.id, startX: i.x, startY: i.y });
+        }
+      });
+    }
+
+    // 3. Anchor the Artboard itself into the drag matrix
+    draggingItemsMap.set(item.id, { id: item.id, startX: item.x, startY: item.y });
+
+    childrenRef.current = Array.from(draggingItemsMap.values());
     
     setIsDragging(true);
     dragStartRef.current = { 
@@ -82,9 +103,6 @@ export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, is
     const newY = dragStartRef.current.itemY + deltaY;
 
     if (onUpdate) {
-      onUpdate(item.id, { x: newX, y: newY });
-      
-      // Cascade structural move to items physically positioned within it based on absolute start coords
       childrenRef.current.forEach(child => {
         onUpdate(child.id, { x: child.startX + deltaX, y: child.startY + deltaY });
       });
@@ -180,7 +198,11 @@ export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, is
         )}
       </div>
 
-      <div className="artboard-frame" />
+      <div className="artboard-frame" style={{
+        outline: selected ? '2px solid #3b82f6' : 'none',
+        outlineOffset: '4px',
+        borderRadius: '2px'
+      }} />
 
       {activeTool === 'pointer' && isHost && (
         <div 

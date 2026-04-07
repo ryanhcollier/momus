@@ -4,30 +4,18 @@ import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useCanvas } from '../Canvas/CanvasContext';
 
-export default function ArrowItem({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool }) {
+export default function ArrowItem({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool, selected, onSelect, selectedIds, allItems }) {
   const { scale } = useCanvas();
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ pointerX: 0, pointerY: 0, itemX: 0, itemY: 0 });
+  const dragStartRef = useRef({ pointerX: 0, pointerY: 0, items: [] });
   
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef({ x: 0, y: 0, scale: 1 });
   const containerRef = useRef(null);
 
-  const [showColorPicker, setShowColorPicker] = useState(false);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (showColorPicker && containerRef.current && !containerRef.current.contains(e.target)) {
-        setShowColorPicker(false);
-      }
-    };
-    document.addEventListener('pointerdown', handleClickOutside);
-    return () => document.removeEventListener('pointerdown', handleClickOutside);
-  }, [showColorPicker]);
-
   const handleDoubleClick = (e) => {
     if (activeTool === 'pointer' && isHost) {
-      setShowColorPicker(true);
+      if (onSelect) onSelect(item.id, false);
       e.stopPropagation();
     }
   };
@@ -38,20 +26,24 @@ export default function ArrowItem({ item, onDelete, onUpdate, onDuplicate, isHos
 
     e.stopPropagation();
     
-    if (activeTool === 'pointer' && isHost && !showColorPicker) {
-      setShowColorPicker(true);
+    if (activeTool === 'pointer' && isHost && onSelect) {
+      onSelect(item.id, e.shiftKey);
     }
     
-    if (e.shiftKey && onDuplicate) {
+    if (e.altKey && onDuplicate) {
       onDuplicate(item);
     }
     
     setIsDragging(true);
+    
+    const draggingItems = (selectedIds && selectedIds.includes(item.id))
+      ? allItems.filter(i => selectedIds.includes(i.id))
+      : [item];
+
     dragStartRef.current = { 
       pointerX: e.clientX, 
       pointerY: e.clientY, 
-      itemX: item.x, 
-      itemY: item.y 
+      items: draggingItems.map(i => ({ id: i.id, startX: i.x, startY: i.y }))
     };
     e.target.setPointerCapture(e.pointerId);
   };
@@ -63,10 +55,14 @@ export default function ArrowItem({ item, onDelete, onUpdate, onDuplicate, isHos
     const dx = e.clientX - dragStartRef.current.pointerX;
     const dy = e.clientY - dragStartRef.current.pointerY;
     
-    const newX = dragStartRef.current.itemX + dx / scale;
-    const newY = dragStartRef.current.itemY + dy / scale;
+    const deltaX = dx / scale;
+    const deltaY = dy / scale;
 
-    if (onUpdate) onUpdate(item.id, { x: newX, y: newY });
+    if (onUpdate) {
+      dragStartRef.current.items.forEach(i => {
+        onUpdate(i.id, { x: i.startX + deltaX, y: i.startY + deltaY });
+      });
+    }
   };
 
   const handlePointerUp = (e) => {
@@ -139,7 +135,7 @@ export default function ArrowItem({ item, onDelete, onUpdate, onDuplicate, isHos
         <X size={12} />
       </button>
 
-      {showColorPicker && isHost && (
+      {selected && isHost && (
         <div style={{
           position: 'absolute', top: '-50px', left: 0, display: 'flex', gap: '4px',
           background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', padding: '6px', 

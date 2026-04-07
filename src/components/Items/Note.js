@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useCanvas } from '../Canvas/CanvasContext';
 
-export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool }) {
+export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool, selected, onSelect, selectedIds, allItems }) {
   const { scale } = useCanvas();
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ pointerX: 0, pointerY: 0, itemX: 0, itemY: 0 });
+  const dragStartRef = useRef({ pointerX: 0, pointerY: 0, items: [] });
   
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef({ x: 0, y: 0, scale: 1 });
@@ -41,7 +41,7 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
   const handleDoubleClick = (e) => {
     if (activeTool === 'pointer' && isHost) {
       setIsEditing(true);
-      setIsActive(true);
+      if (onSelect) onSelect(item.id, false);
       e.stopPropagation();
     }
   };
@@ -62,20 +62,24 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
 
     e.stopPropagation();
     
-    if (activeTool === 'pointer' && isHost && !isActive) {
-      setIsActive(true);
+    if (activeTool === 'pointer' && isHost && onSelect) {
+      onSelect(item.id, e.shiftKey);
     }
     
-    if (e.shiftKey && onDuplicate) {
+    if (e.altKey && onDuplicate) {
       onDuplicate(item);
     }
     
     setIsDragging(true);
+    
+    const draggingItems = (selectedIds && selectedIds.includes(item.id))
+      ? allItems.filter(i => selectedIds.includes(i.id))
+      : [item];
+
     dragStartRef.current = { 
       pointerX: e.clientX, 
       pointerY: e.clientY, 
-      itemX: item.x, 
-      itemY: item.y 
+      items: draggingItems.map(i => ({ id: i.id, startX: i.x, startY: i.y }))
     };
     e.target.setPointerCapture(e.pointerId);
   };
@@ -87,10 +91,14 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
     const dx = e.clientX - dragStartRef.current.pointerX;
     const dy = e.clientY - dragStartRef.current.pointerY;
     
-    const newX = dragStartRef.current.itemX + dx / scale;
-    const newY = dragStartRef.current.itemY + dy / scale;
+    const deltaX = dx / scale;
+    const deltaY = dy / scale;
 
-    if (onUpdate) onUpdate(item.id, { x: newX, y: newY });
+    if (onUpdate) {
+      dragStartRef.current.items.forEach(i => {
+        onUpdate(i.id, { x: i.startX + deltaX, y: i.startY + deltaY });
+      });
+    }
   };
 
   const handlePointerUp = (e) => {
@@ -170,7 +178,7 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
         transformOrigin: 'top left',
         zIndex: item.z_index !== undefined ? item.z_index : 2,
         transitionDuration: isDragging || isResizing || isWidthResizing ? '0ms' : '150ms',
-        outline: isActive ? '2px solid #3b82f6' : 'none',
+        outline: selected ? '2px solid #3b82f6' : 'none',
         outlineOffset: '4px',
         borderRadius: '4px'
       }}
@@ -187,7 +195,7 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
         <X size={12} />
       </button>
 
-      {(isEditing || isActive) && isHost && (
+      {(isEditing || selected) && isHost && (
         <div style={{
           position: 'absolute', top: '-40px', left: 0, display: 'flex', gap: '4px',
           background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', padding: '6px', 
@@ -239,7 +247,7 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
             onPointerCancel={handleResizeUp}
             title="Scale Text"
           />
-          {isActive && (
+          {selected && (
             <div 
               className="width-resize-handle"
               onPointerDown={handleWidthResizeDown}

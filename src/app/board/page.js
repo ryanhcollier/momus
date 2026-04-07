@@ -19,6 +19,7 @@ function BoardContent() {
 
   const [isHost, setIsHost] = useState(false);
   const [activeTool, setActiveTool] = useState('pointer'); // 'pointer', 'note', 'image', 'video'
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Convex Subscriptions & Mutations
   const board = useQuery(api.boards.getBoard, { id });
@@ -56,6 +57,8 @@ function BoardContent() {
   }
 
   const handleBoardClick = async (x, y) => {
+    setSelectedIds([]); // clear selection context natively
+
     if (activeTool === 'note') {
       // Create empty note (server will instantly stream it back to all views)
       await addItemMutation({
@@ -201,6 +204,16 @@ function BoardContent() {
     }
   };
 
+  const handleSelect = (itemId, isShift) => {
+    setSelectedIds(prev => {
+      if (isShift) {
+        return prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId];
+      } else {
+        return prev.includes(itemId) ? prev : [itemId];
+      }
+    });
+  };
+
   // Convert old DB formats to standardized generic props locally for the components
   const normalizedItems = items.map(item => ({
     ...item,
@@ -214,67 +227,31 @@ function BoardContent() {
     <div className={`board-layout ${board.bg_color}`}>
       <Canvas bgColor={board.bg_color} onBoardClick={handleBoardClick} onBoardDrop={handleCanvasDrop}>
         {normalizedItems.map((item) => {
+          const isSelected = selectedIds.includes(item.id);
+          const commonProps = {
+            key: item.id,
+            item,
+            isHost,
+            onDelete: handleDeleteItem,
+            onUpdate: handleUpdateItem,
+            onDuplicate: handleDuplicateItem,
+            onSelect: handleSelect,
+            selected: isSelected,
+            selectedIds,
+            allItems: normalizedItems,
+            activeTool
+          };
+
           if (item.type === 'note') {
-            return (
-              <Note 
-                key={item.id} 
-                item={item} 
-                isHost={isHost} 
-                onDelete={handleDeleteItem} 
-                onUpdate={handleUpdateItem}
-                onDuplicate={handleDuplicateItem}
-                activeTool={activeTool}
-              />
-            );
+            return <Note {...commonProps} />;
           } else if (item.type === 'artboard') {
-            return (
-              <ArtboardItem 
-                key={item.id} 
-                item={item} 
-                allItems={normalizedItems}
-                isHost={isHost} 
-                onDelete={handleDeleteItem} 
-                onUpdate={handleUpdateItem}
-                onDuplicate={handleDuplicateItem}
-                activeTool={activeTool}
-              />
-            );
+            return <ArtboardItem {...commonProps} />;
           } else if (item.type === 'circle') {
-            return (
-              <CircleItem 
-                key={item.id} 
-                item={item} 
-                isHost={isHost} 
-                onDelete={handleDeleteItem} 
-                onUpdate={handleUpdateItem}
-                onDuplicate={handleDuplicateItem}
-                activeTool={activeTool}
-              />
-            );
+            return <CircleItem {...commonProps} />;
           } else if (item.type === 'arrow') {
-            return (
-              <ArrowItem 
-                key={item.id} 
-                item={item} 
-                isHost={isHost} 
-                onDelete={handleDeleteItem} 
-                onUpdate={handleUpdateItem}
-                onDuplicate={handleDuplicateItem}
-                activeTool={activeTool}
-              />
-            );
+            return <ArrowItem {...commonProps} />;
           } else {
-            return (
-              <MediaItem 
-                key={item.id} 
-                item={item} 
-                isHost={isHost} 
-                onDelete={handleDeleteItem} 
-                onUpdate={handleUpdateItem}
-                onDuplicate={handleDuplicateItem}
-                activeTool={activeTool}
-              />
-            );
+            return <MediaItem {...commonProps} />;
           }
         })}
       </Canvas>

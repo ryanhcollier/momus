@@ -4,10 +4,10 @@ import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useCanvas } from '../Canvas/CanvasContext';
 
-export default function MediaItem({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool }) {
+export default function MediaItem({ item, onDelete, onUpdate, onDuplicate, isHost, activeTool, selected, onSelect, selectedIds, allItems }) {
   const { scale } = useCanvas();
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ pointerX: 0, pointerY: 0, itemX: 0, itemY: 0 });
+  const dragStartRef = useRef({ pointerX: 0, pointerY: 0, items: [] });
 
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef({ x: 0, y: 0, scale: 1 });
@@ -18,16 +18,27 @@ export default function MediaItem({ item, onDelete, onUpdate, onDuplicate, isHos
 
     e.stopPropagation();
     
-    if (e.shiftKey && onDuplicate) {
+    // Process explicit item selection matrix
+    if (activeTool === 'pointer' && isHost && onSelect) {
+      onSelect(item.id, e.shiftKey);
+    }
+    
+    // Alt/Option key remapped for duplicate features
+    if (e.altKey && onDuplicate) {
       onDuplicate(item);
     }
     
     setIsDragging(true);
+    
+    // Gather all targets natively if this item is inside the active selection
+    const draggingItems = (selectedIds && selectedIds.includes(item.id))
+      ? allItems.filter(i => selectedIds.includes(i.id))
+      : [item];
+
     dragStartRef.current = { 
       pointerX: e.clientX, 
       pointerY: e.clientY, 
-      itemX: item.x, 
-      itemY: item.y 
+      items: draggingItems.map(i => ({ id: i.id, startX: i.x, startY: i.y }))
     };
     e.target.setPointerCapture(e.pointerId);
   };
@@ -39,10 +50,14 @@ export default function MediaItem({ item, onDelete, onUpdate, onDuplicate, isHos
     const dx = e.clientX - dragStartRef.current.pointerX;
     const dy = e.clientY - dragStartRef.current.pointerY;
     
-    const newX = dragStartRef.current.itemX + dx / scale;
-    const newY = dragStartRef.current.itemY + dy / scale;
+    const deltaX = dx / scale;
+    const deltaY = dy / scale;
 
-    if (onUpdate) onUpdate(item.id, { x: newX, y: newY });
+    if (onUpdate) {
+      dragStartRef.current.items.forEach(i => {
+        onUpdate(i.id, { x: i.startX + deltaX, y: i.startY + deltaY });
+      });
+    }
   };
 
   const handlePointerUp = (e) => {
@@ -91,6 +106,9 @@ export default function MediaItem({ item, onDelete, onUpdate, onDuplicate, isHos
         transform: `scale(${item.scale || 1})`,
         transformOrigin: 'top left',
         zIndex: item.z_index !== undefined ? item.z_index : 2,
+        outline: selected ? '2px solid #3b82f6' : 'none',
+        outlineOffset: '4px',
+        borderRadius: '4px'
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
