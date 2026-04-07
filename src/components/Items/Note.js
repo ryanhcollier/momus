@@ -18,6 +18,9 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
   const [isEditing, setIsEditing] = useState(!item.text); // auto-edit if empty
   const [localText, setLocalText] = useState(item.text);
   const inputRef = useRef(null);
+  
+  const [isActive, setIsActive] = useState(false);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -25,9 +28,20 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isActive && containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsActive(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
+  }, [isActive]);
+
   const handleDoubleClick = (e) => {
     if (activeTool === 'pointer' && isHost) {
       setIsEditing(true);
+      setIsActive(true);
       e.stopPropagation();
     }
   };
@@ -47,6 +61,10 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
     if (e.target.tagName.toLowerCase() === 'textarea' || e.target.tagName.toLowerCase() === 'input' || e.target.isContentEditable) return;
 
     e.stopPropagation();
+    
+    if (activeTool === 'pointer' && isHost && !isActive) {
+      setIsActive(true);
+    }
     
     if (e.shiftKey && onDuplicate) {
       onDuplicate(item);
@@ -142,6 +160,7 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
 
   return (
     <div
+      ref={containerRef}
       className={`text-node ${isDragging || isResizing || isWidthResizing ? 'text-dragging' : 'text-idle'}`}
       style={{
         left: item.x,
@@ -150,7 +169,10 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
         transform: `scale(${item.scale || 1})`,
         transformOrigin: 'top left',
         zIndex: item.z_index !== undefined ? item.z_index : 2,
-        transitionDuration: isDragging || isResizing || isWidthResizing ? '0ms' : '150ms'
+        transitionDuration: isDragging || isResizing || isWidthResizing ? '0ms' : '150ms',
+        outline: isActive ? '2px solid #3b82f6' : 'none',
+        outlineOffset: '4px',
+        borderRadius: '4px'
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -165,7 +187,7 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
         <X size={12} />
       </button>
 
-      {isEditing && isHost && (
+      {(isEditing || isActive) && isHost && (
         <div style={{
           position: 'absolute', top: '-40px', left: 0, display: 'flex', gap: '4px',
           background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', padding: '6px', 
@@ -217,17 +239,30 @@ export default function Note({ item, onDelete, onUpdate, onDuplicate, isHost, ac
             onPointerCancel={handleResizeUp}
             title="Scale Text"
           />
-          <div 
-            className="width-resize-handle"
-            onPointerDown={handleWidthResizeDown}
-            onPointerMove={handleWidthResizeMove}
-            onPointerUp={handleWidthResizeUp}
-            onPointerCancel={handleWidthResizeUp}
-            style={{
-              position: 'absolute', top: 0, right: '-6px', height: '100%', width: '12px',
-              cursor: 'ew-resize', zIndex: 60, opacity: 0
-            }}
-          />
+          {isActive && (
+            <div 
+              className="width-resize-handle"
+              onPointerDown={handleWidthResizeDown}
+              onPointerMove={handleWidthResizeMove}
+              onPointerUp={handleWidthResizeUp}
+              onPointerCancel={handleWidthResizeUp}
+              style={{
+                position: 'absolute', 
+                top: '50%', 
+                right: '-16px', 
+                height: '24px', 
+                width: '12px',
+                transform: 'translateY(-50%)',
+                cursor: 'ew-resize', 
+                zIndex: 60, 
+                opacity: 1,
+                background: '#ffffff',
+                border: '2px solid #3b82f6',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}
+            />
+          )}
         </>
       )}
     </div>
