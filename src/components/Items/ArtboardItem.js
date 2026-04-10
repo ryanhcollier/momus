@@ -51,6 +51,15 @@ export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, is
     
     if (e.altKey && onDuplicate) {
       onDuplicate(item);
+      // Recursively command the system to duplicate natively parented geometries synchronously
+      if (childrenRef.current) {
+        childrenRef.current.forEach(child => {
+          if (child.id !== item.id) {
+            const childItem = allItems.find(i => i.id === child.id);
+            if (childItem) onDuplicate(childItem);
+          }
+        });
+      }
     }
     
     const draggingItemsMap = new Map();
@@ -189,7 +198,11 @@ export default function ArtboardItem({ item, onDelete, onUpdate, onDuplicate, is
 
         {isHost && (
           <button 
-            onClick={() => onDelete(item.id)}
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete this artboard and potentially its contents?')) {
+                onDelete(item.id);
+              }
+            }}
             style={{ color: '#ef4444' }}
             className="artboard-delete-btn"
           >

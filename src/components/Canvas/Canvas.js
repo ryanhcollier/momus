@@ -10,25 +10,57 @@ export default function Canvas({ children, bgColor, onBoardClick, onBoardDrop })
   const isDraggingRef = useRef(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
   const containerRef = useRef(null);
+  const isZKeyDownRef = useRef(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key.toLowerCase() === 'z') {
+        isZKeyDownRef.current = true;
+      }
+    };
+    const handleKeyUp = (e) => {
+      if (e.key.toLowerCase() === 'z') {
+        isZKeyDownRef.current = false;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   const handleWheel = (e) => {
     e.preventDefault();
-    const zoomSensitivity = 0.002;
-    const zoomFactor = -e.deltaY * zoomSensitivity;
-    const newScale = Math.min(Math.max(scale + zoomFactor, 0.1), 5);
     
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const cursorX = e.clientX - rect.left;
-      const cursorY = e.clientY - rect.top;
+    if (isZKeyDownRef.current) {
+      // Execute strict zoom matrix
+      const zoomSensitivity = 0.002;
+      const zoomFactor = -e.deltaY * zoomSensitivity;
+      const newScale = Math.min(Math.max(scale + zoomFactor, 0.1), 5);
       
-      const scaleChange = newScale - scale;
-      const newX = position.x - (cursorX - position.x) * (scaleChange / scale);
-      const newY = position.y - (cursorY - position.y) * (scaleChange / scale);
-      
-      setPosition({ x: newX, y: newY });
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const cursorX = e.clientX - rect.left;
+        const cursorY = e.clientY - rect.top;
+        
+        const scaleChange = newScale - scale;
+        const newX = position.x - (cursorX - position.x) * (scaleChange / scale);
+        const newY = position.y - (cursorY - position.y) * (scaleChange / scale);
+        
+        setPosition({ x: newX, y: newY });
+      }
+      setScale(newScale);
+    } else {
+      // Execute standard physical X/Y panning
+      setPosition(prev => ({
+        x: prev.x - e.deltaX,
+        y: prev.y - e.deltaY
+      }));
     }
-    setScale(newScale);
   };
 
   const handlePointerDown = (e) => {
