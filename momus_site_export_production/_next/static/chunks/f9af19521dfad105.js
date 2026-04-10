@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,88976,e=>{"use strict";var t=e.i(43476);e.i(50711);var i=e.i(82045);let n=new i.ConvexReactClient("http://127.0.0.1:3210");function o({children:e}){return(0,t.jsx)(i.ConvexProvider,{client:n,children:e})}e.s(["default",()=>o])}]);
